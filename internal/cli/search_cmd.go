@@ -32,7 +32,12 @@ Results are paginated by an opaque token instead of an offset: when the
 response's "isLast" is false, pass its "nextPageToken" back via --page-token
 to fetch the next page.
 
-JQL field/syntax reference: https://support.atlassian.com/jira-software-cloud/docs/jql-fields/`,
+JQL field/syntax reference: https://support.atlassian.com/jira-software-cloud/docs/jql-fields/
+
+If Jira rejects a literal value with an error like "Expecting either a value,
+list or function but got '<WORD>'", that word is a JQL reserved word (e.g.
+IN, AND, OR, EMPTY) — quote it: project = "IN". Full reserved word list:
+https://support.atlassian.com/jira-software-cloud/docs/what-is-advanced-searching-in-jira-cloud/`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		body := map[string]any{

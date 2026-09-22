@@ -66,7 +66,10 @@ gojira api <METHOD> <path> [--data '<json>' | --data @file | --data -] \
 - `gojira search '<JQL>' --output text [--fields ...] [--jira-fields ...]`
   — JQL search (`POST /search/jql`). Paginated by token, not offset: if the
   response's `isLast` is `false`, pass its `nextPageToken` back via
-  `--page-token` for the next page.
+  `--page-token` for the next page. If a literal value in your JQL (a
+  project key, custom field value, etc.) happens to be a JQL reserved word
+  (`IN`, `AND`, `OR`, `EMPTY`, ...), Jira rejects it with "Expecting either
+  a value, list or function but got '<WORD>'" — quote it: `project = "IN"`.
 
 Full flags for every command: `gojira <command> --help`, or the static copy
 in `references/commands.md` next to this file.
