@@ -1,0 +1,5 @@
+/dist/
+/gojira
+*.test
+*.out
+.DS_Store
