@@ -17,7 +17,9 @@ When in doubt, run `--help` on the live binary — it's authoritative.
 
 ## auth
 
-- `gojira auth login [--site <alias>]` — browser OAuth login; stores tokens.
+- `gojira auth login [--site <alias>] [--no-browser]` — browser OAuth login;
+  stores tokens. `--no-browser` prints the authorization URL instead of
+  opening it automatically (useful with multiple browsers/profiles).
 - `gojira auth status [--site <alias>]` — show token expiry and whether a
   refresh token is present.
 - `gojira auth refresh [--site <alias>]` — force an immediate refresh.

@@ -1,5 +1,6 @@
-// Package auth implements Atlassian's OAuth 2.0 (3LO) authorization-code +
-// PKCE flow for Jira Cloud, plus token storage and transparent refresh.
+// Package auth implements Atlassian's OAuth 2.0 (3LO) authorization-code
+// flow for Jira Cloud (no PKCE — see Login), plus token storage and
+// transparent refresh.
 package auth
 
 import (
@@ -69,14 +70,14 @@ type AccessibleResource struct {
 // PKCE for apps created in the developer console (confirmed by Atlassian
 // staff: https://community.developer.atlassian.com/t/oauth-2-0-with-proof-key-for-code-exchange-pkce/80173),
 // so a confidential client (client id + secret) is required.
-func Login(ctx context.Context, alias string, site config.Site) (cloudID string, err error) {
+func Login(ctx context.Context, alias string, site config.Site, autoOpenBrowser bool) (cloudID string, err error) {
 	state, err := randomString(24)
 	if err != nil {
 		return "", err
 	}
 	conf := oauthConfig(site)
 
-	code, err := runCallbackServer(ctx, redirectPort(site), state, conf)
+	code, err := runCallbackServer(ctx, redirectPort(site), state, conf, autoOpenBrowser)
 	if err != nil {
 		return "", err
 	}
@@ -86,18 +87,24 @@ func Login(ctx context.Context, alias string, site config.Site) (cloudID string,
 		return "", fmt.Errorf("exchange authorization code: %w", err)
 	}
 
-	cloudID, err = ResolveCloudID(ctx, tok, site.BaseURL)
-	if err != nil {
-		return "", err
-	}
-
+	// Save the token before resolving the cloud id: the exchange above is the
+	// hard-won, non-retryable step (it consumes a single-use auth code and
+	// needs a fresh browser consent to redo), while the cloud id is a cheap
+	// lookup that EnsureCloudID already re-resolves lazily on next use. Losing
+	// the token to a transient failure in the latter would be far worse than
+	// losing the (already-cached) cloud id.
 	if _, err := SaveToken(alias, tok); err != nil {
 		return "", fmt.Errorf("save token: %w", err)
+	}
+
+	cloudID, err = ResolveCloudID(ctx, tok, site.BaseURL)
+	if err != nil {
+		return "", fmt.Errorf("token saved, but resolving the Jira cloud id failed (it will be retried automatically on your next gojira command): %w", err)
 	}
 	return cloudID, nil
 }
 
-func runCallbackServer(ctx context.Context, port int, state string, conf *oauth2.Config) (string, error) {
+func runCallbackServer(ctx context.Context, port int, state string, conf *oauth2.Config, autoOpenBrowser bool) (string, error) {
 	codeCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 
@@ -137,9 +144,13 @@ func runCallbackServer(ctx context.Context, port int, state string, conf *oauth2
 		oauth2.SetAuthURLParam("prompt", "consent"),
 	)
 
-	fmt.Printf("Opening your browser to authorize gojira:\n\n%s\n\n", authURL)
-	if err := openBrowser(authURL); err != nil {
-		fmt.Printf("(couldn't open a browser automatically: %v; open the URL above manually)\n", err)
+	if autoOpenBrowser {
+		fmt.Printf("Opening your browser to authorize gojira:\n\n%s\n\n", authURL)
+		if err := openBrowser(authURL); err != nil {
+			fmt.Printf("(couldn't open a browser automatically: %v; open the URL above manually)\n", err)
+		}
+	} else {
+		fmt.Printf("Open this URL in your browser to authorize gojira:\n\n%s\n\n", authURL)
 	}
 
 	select {
@@ -154,25 +165,15 @@ func runCallbackServer(ctx context.Context, port int, state string, conf *oauth2
 	}
 }
 
+const maxCloudIDRetries = 3
+
 // ResolveCloudID looks up the Jira Cloud id for the site matching baseURL
 // among the resources the current token has access to. If baseURL is empty
 // and exactly one resource is accessible, that one is used.
 func ResolveCloudID(ctx context.Context, tok *oauth2.Token, baseURL string) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, accessibleResourcesURL, nil)
+	body, err := listAccessibleResources(ctx, tok)
 	if err != nil {
 		return "", err
-	}
-	req.Header.Set("Authorization", "Bearer "+tok.AccessToken)
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("list accessible resources: %w", err)
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("list accessible resources: %s: %s", resp.Status, string(body))
 	}
 
 	var resources []AccessibleResource
@@ -205,6 +206,59 @@ func ResolveCloudID(ctx context.Context, tok *oauth2.Token, baseURL string) (str
 		return "", fmt.Errorf("multiple accessible sites and no base_url configured to disambiguate: %s", strings.Join(available, ", "))
 	}
 	return resources[0].ID, nil
+}
+
+// listAccessibleResources calls accessibleResourcesURL, retrying on 429 and
+// transient 5xx responses with backoff, the same way internal/client.Do does
+// for regular API calls (this endpoint is reached directly rather than
+// through that client, since it's not scoped to a resolved cloud id yet).
+func listAccessibleResources(ctx context.Context, tok *oauth2.Token) ([]byte, error) {
+	var lastErr error
+	var wait time.Duration
+	for attempt := 0; attempt <= maxCloudIDRetries; attempt++ {
+		if attempt > 0 {
+			select {
+			case <-time.After(wait):
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			}
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, accessibleResourcesURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+tok.AccessToken)
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			lastErr = fmt.Errorf("list accessible resources: %w", err)
+			wait = time.Duration(1<<uint(attempt+1)) * 500 * time.Millisecond
+			continue
+		}
+		body, readErr := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if readErr != nil {
+			lastErr = fmt.Errorf("read accessible resources response: %w", readErr)
+			wait = time.Duration(1<<uint(attempt+1)) * 500 * time.Millisecond
+			continue
+		}
+
+		if resp.StatusCode == http.StatusTooManyRequests || (resp.StatusCode >= 500 && resp.StatusCode < 600) {
+			lastErr = fmt.Errorf("list accessible resources: %s: %s", resp.Status, string(body))
+			if attempt < maxCloudIDRetries {
+				wait = time.Duration(1<<uint(attempt+1)) * 500 * time.Millisecond
+				continue
+			}
+			return nil, lastErr
+		}
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("list accessible resources: %s: %s", resp.Status, string(body))
+		}
+		return body, nil
+	}
+	return nil, lastErr
 }
 
 // TokenSource returns an oauth2.TokenSource that transparently refreshes the

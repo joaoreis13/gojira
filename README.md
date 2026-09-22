@@ -144,7 +144,7 @@ Every command also documents itself via `--help`; this is the shape of it:
 |---|---|
 | `gojira site add <alias> --base-url ... --client-id ... --client-secret ...` | Register a Jira site's OAuth app config. `--scopes`, `--redirect-port`, `--default` are optional. |
 | `gojira site list` / `site use <alias>` / `site remove <alias>` | List, switch default, or remove a configured site. |
-| `gojira auth login [--site]` | Run the browser OAuth flow and store tokens. |
+| `gojira auth login [--site] [--no-browser]` | Run the browser OAuth flow and store tokens. `--no-browser` prints the URL instead of auto-opening it. |
 | `gojira auth status [--site]` | Show token expiry and whether a refresh token is stored. |
 | `gojira auth refresh [--site]` | Force an immediate token refresh. |
 | `gojira auth logout [--site]` | Delete locally stored credentials (does not revoke the grant on Atlassian's side). |

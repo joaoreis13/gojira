@@ -16,10 +16,18 @@ var authCmd = &cobra.Command{
 }
 
 var authSiteFlag string
+var authNoBrowserFlag bool
 
 var authLoginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Authorize gojira for a site via your browser (OAuth 2.0 + PKCE)",
+	Short: "Authorize gojira for a site via your browser (OAuth 2.0 3LO, authorization code)",
+	Long: `Authorize gojira for a site via your browser.
+
+By default this tries to open the authorization URL in your OS's default
+browser. Pass --no-browser to skip that and just print the URL instead,
+so you can paste it into whichever browser you actually want to authorize
+with (useful if your default browser isn't signed into the right
+Atlassian account, or you run multiple browser profiles).`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
 		if err != nil {
@@ -29,7 +37,7 @@ var authLoginCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		cloudID, err := auth.Login(cmd.Context(), alias, site)
+		cloudID, err := auth.Login(cmd.Context(), alias, site, !authNoBrowserFlag)
 		if err != nil {
 			return err
 		}
@@ -119,5 +127,6 @@ func init() {
 	for _, c := range []*cobra.Command{authLoginCmd, authStatusCmd, authRefreshCmd, authLogoutCmd} {
 		c.Flags().StringVar(&authSiteFlag, "site", "", "site alias (defaults to the configured default site)")
 	}
+	authLoginCmd.Flags().BoolVar(&authNoBrowserFlag, "no-browser", false, "print the authorization URL instead of opening it automatically")
 	authCmd.AddCommand(authLoginCmd, authStatusCmd, authRefreshCmd, authLogoutCmd)
 }

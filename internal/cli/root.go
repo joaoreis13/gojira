@@ -8,10 +8,11 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "gojira",
 	Short: "An OAuth-managed, full-coverage CLI for the Jira Cloud REST API",
-	Long: `gojira authenticates to Jira Cloud with OAuth 2.0 (3LO) + PKCE and
-manages token refresh automatically. "gojira api" reaches any REST API v3
-endpoint directly (including admin and destructive ones), and a small set
-of convenience commands (whoami, search, ...) sit on top of it.`,
+	Long: `gojira authenticates to Jira Cloud with OAuth 2.0 (3LO) (authorization
+code grant with a client secret — Atlassian's 3LO apps don't support PKCE)
+and manages token refresh automatically. "gojira api" reaches any REST API
+v3 endpoint directly (including admin and destructive ones), and a small
+set of convenience commands (whoami, search, ...) sit on top of it.`,
 	SilenceUsage:  true,
 	SilenceErrors: false,
 }
