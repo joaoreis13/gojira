@@ -70,3 +70,14 @@ func TestRenderResponseAppliesFieldsAndText(t *testing.T) {
 		t.Errorf("renderResponse text output = %q", buf.String())
 	}
 }
+
+func TestRenderResponseWritesNonJSONBodyVerbatim(t *testing.T) {
+	var buf bytes.Buffer
+	body := []byte{0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x01}
+	if err := renderResponse(&buf, body, "", "json", false); err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(buf.Bytes(), body) {
+		t.Errorf("renderResponse on non-JSON body = %x, want %x (no bytes added/removed)", buf.Bytes(), body)
+	}
+}

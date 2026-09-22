@@ -57,8 +57,12 @@ func renderResponse(w io.Writer, body []byte, fieldsFlag, outputMode string, pre
 	}
 	var data any
 	if err := json.Unmarshal(body, &data); err != nil {
-		fmt.Fprintln(w, string(body))
-		return nil
+		// Non-JSON responses (e.g. raw attachment bytes from
+		// /attachment/content/{id}) are written verbatim: no appended
+		// newline, so `gojira api GET ... > file` round-trips binary content
+		// byte-for-byte.
+		_, werr := w.Write(body)
+		return werr
 	}
 	if fieldsFlag != "" {
 		data = output.ApplyFields(data, strings.Split(fieldsFlag, ","))

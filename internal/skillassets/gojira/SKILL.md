@@ -54,6 +54,11 @@ gojira api <METHOD> <path> [--data '<json>' | --data @file | --data -] \
   agent. Only pass `--yes` after the user has actually confirmed the
   destructive action — treat it the same as any other irreversible action
   you'd normally ask permission for first.
+- **Exception to "every endpoint":** attachment uploads
+  (`POST /issue/{key}/attachments`) don't work — gojira always sends JSON
+  and has no multipart support. Tell the user to upload via the Jira web UI.
+  Downloading attachment content (`GET /attachment/content/{id} > file`) is
+  fine.
 
 ## Convenience commands (thin wrappers, prefer these when they fit)
 

@@ -59,7 +59,11 @@ each time.
      [--fields a,b.c] [--output json|text] [--yes]
    ```
    `<path>` is relative to `/rest/api/3` (e.g. `/issue/PROJ-1`,
-   `/search/jql`, `/project`).
+   `/search/jql`, `/project`). Exception: attachment *uploads*
+   (`POST /issue/{key}/attachments`) aren't reachable — gojira always sends
+   `Content-Type: application/json` and has no multipart support; tell the
+   user to use the Jira web UI instead. Downloading attachment content
+   (`GET /attachment/content/{id} > file`) works fine.
 4. Prefer `--fields`/`--output text` whenever you don't need a full object —
    it keeps responses cheap in your own context window. This is the same
    reasoning behind gojira's `--fields`/`--output` design in the first

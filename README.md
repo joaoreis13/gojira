@@ -257,6 +257,15 @@ convenience commands (`whoami`, `search`) exist to demonstrate the pattern
 and will grow incrementally. Cloud only — Jira Server/Data Center (which has
 no OAuth 2.0 3LO) is out of scope for now.
 
+**Known limitation: attachment uploads.** `gojira api` always sends
+`Content-Type: application/json` and has no `multipart/form-data` support, so
+[`POST /issue/{issueIdOrKey}/attachments`](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-attachments/#api-rest-api-3-issue-issueidorkey-attachments-post)
+(which requires a multipart body and an `X-Atlassian-Token: no-check` header)
+can't be reached through gojira. Use the Jira web UI to upload attachments.
+Downloading attachment *content* works fine —
+`gojira api GET /attachment/content/{id} > file` writes the response body
+byte-for-byte, since non-JSON responses are passed through verbatim.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
