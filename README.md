@@ -151,6 +151,7 @@ Every command also documents itself via `--help`; this is the shape of it:
 | `gojira api <METHOD> <path> [--data] [--query] [--fields] [--output] [--pretty] [--yes] [--site]` | Call any REST API v3 endpoint. `<path>` is relative to `/rest/api/3` (e.g. `/issue/PROJ-1`). |
 | `gojira whoami [--site]` | `GET /myself` — the authenticated user. |
 | `gojira search <JQL> [--max-results] [--page-token] [--jira-fields] [--fields] [--output] [--site]` | `POST /search/jql` — run a JQL query. |
+| `gojira skill install [--project] [--dest <dir>]` | Install the bundled Agent Skill (see below). |
 
 ### `--data` (on `api`)
 
@@ -167,6 +168,24 @@ Every command also documents itself via `--help`; this is the shape of it:
   shapes (issue search results, a single issue, `values`-paginated admin
   lists); anything else falls back to compact JSON either way.
 - `--pretty` — indent JSON output (only relevant with `--output json`).
+
+## For AI agents
+
+gojira is designed to be driven by an AI agent as readily as by a human —
+that's what `--fields`/`--output text` and the destructive-action `--yes`
+gate are for.
+
+- **[AGENTS.md](AGENTS.md)** — condensed operational guide for any agent
+  reading this repository directly: install/setup/usage, where to look up
+  endpoint-specific request/response shapes, and guardrails around
+  destructive calls and credentials.
+- **`gojira skill install`** — installs a portable Agent Skill (`SKILL.md` +
+  a static command reference) onto this machine, so a Claude Code-compatible
+  harness picks up the same guidance automatically in future sessions
+  without re-reading this README. Installs to `~/.claude/skills/gojira` by
+  default; `--project` installs to `./.claude/skills/gojira` instead, and
+  `--dest <dir>` targets any other location. Source:
+  [`internal/skillassets/gojira/`](internal/skillassets/gojira/).
 
 ## Troubleshooting
 
@@ -209,6 +228,9 @@ If you logged in and your OS keyring was available, also remove gojira's
 entries from it (e.g. Keychain Access on macOS, Credential Manager on
 Windows, Secret Service/`secret-tool` on Linux) — `gojira auth logout`
 before uninstalling does this for you per site.
+
+If you ran `gojira skill install`, also remove `~/.claude/skills/gojira`
+(or `./.claude/skills/gojira`, or your `--dest` path).
 
 ## Security notes
 
