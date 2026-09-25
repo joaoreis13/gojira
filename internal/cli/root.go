@@ -23,5 +23,5 @@ func Execute() error {
 }
 
 func init() {
-	rootCmd.AddCommand(authCmd, siteCmd, apiCmd, whoamiCmd, searchCmd, skillCmd)
+	rootCmd.AddCommand(authCmd, profileCmd, apiCmd, whoamiCmd, searchCmd, skillCmd)
 }

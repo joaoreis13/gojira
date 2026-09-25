@@ -43,28 +43,29 @@ func (s storedToken) toOAuth2() *oauth2.Token {
 
 // fallbackPath returns the file used when the OS keyring is unavailable
 // (e.g. a headless Linux box with no Secret Service / D-Bus session).
-func fallbackPath(site string) (string, error) {
+func fallbackPath(alias string) (string, error) {
 	dir, err := config.Dir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(dir, "credentials", site+".json"), nil
+	return filepath.Join(dir, "credentials", alias+".json"), nil
 }
 
-// SaveToken persists a token for the given site, preferring the OS keyring
-// and falling back to a 0600 file under the config directory. It returns
-// whether the fallback path was used, so callers can warn the user once.
-func SaveToken(site string, tok *oauth2.Token) (usedFallback bool, err error) {
+// SaveToken persists a token for the given profile alias, preferring the OS
+// keyring and falling back to a 0600 file under the config directory. It
+// returns whether the fallback path was used, so callers can warn the user
+// once.
+func SaveToken(alias string, tok *oauth2.Token) (usedFallback bool, err error) {
 	data, err := json.Marshal(toStored(tok))
 	if err != nil {
 		return false, fmt.Errorf("encode token: %w", err)
 	}
 
-	if kerr := keyring.Set(keyringService, site, string(data)); kerr == nil {
+	if kerr := keyring.Set(keyringService, alias, string(data)); kerr == nil {
 		return false, nil
 	}
 
-	p, ferr := fallbackPath(site)
+	p, ferr := fallbackPath(alias)
 	if ferr != nil {
 		return false, ferr
 	}
@@ -77,10 +78,10 @@ func SaveToken(site string, tok *oauth2.Token) (usedFallback bool, err error) {
 	return true, nil
 }
 
-// LoadToken retrieves the stored token for a site, checking the OS keyring
-// first and then the fallback file.
-func LoadToken(site string) (*oauth2.Token, error) {
-	if data, err := keyring.Get(keyringService, site); err == nil {
+// LoadToken retrieves the stored token for a profile alias, checking the OS
+// keyring first and then the fallback file.
+func LoadToken(alias string) (*oauth2.Token, error) {
+	if data, err := keyring.Get(keyringService, alias); err == nil {
 		var st storedToken
 		if err := json.Unmarshal([]byte(data), &st); err != nil {
 			return nil, fmt.Errorf("decode token from keyring: %w", err)
@@ -88,13 +89,13 @@ func LoadToken(site string) (*oauth2.Token, error) {
 		return st.toOAuth2(), nil
 	}
 
-	p, err := fallbackPath(site)
+	p, err := fallbackPath(alias)
 	if err != nil {
 		return nil, err
 	}
 	data, err := os.ReadFile(p)
 	if os.IsNotExist(err) {
-		return nil, fmt.Errorf("not logged in to site %q; run `gojira auth login --site %s`", site, site)
+		return nil, fmt.Errorf("not logged in to profile %q; run `gojira auth login --profile %s`", alias, alias)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("read fallback credentials file: %w", err)
@@ -106,10 +107,11 @@ func LoadToken(site string) (*oauth2.Token, error) {
 	return st.toOAuth2(), nil
 }
 
-// DeleteToken removes stored credentials for a site from both backends.
-func DeleteToken(site string) error {
-	_ = keyring.Delete(keyringService, site)
-	p, err := fallbackPath(site)
+// DeleteToken removes stored credentials for a profile alias from both
+// backends.
+func DeleteToken(alias string) error {
+	_ = keyring.Delete(keyringService, alias)
+	p, err := fallbackPath(alias)
 	if err != nil {
 		return err
 	}

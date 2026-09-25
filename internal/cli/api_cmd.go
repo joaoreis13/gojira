@@ -10,13 +10,13 @@ import (
 )
 
 var (
-	apiSiteFlag   string
-	apiDataFlag   string
-	apiQueryFlags []string
-	apiFieldsFlag string
-	apiOutputFlag string
-	apiPrettyFlag bool
-	apiYesFlag    bool
+	apiProfileFlag string
+	apiDataFlag    string
+	apiQueryFlags  []string
+	apiFieldsFlag  string
+	apiOutputFlag  string
+	apiPrettyFlag  bool
+	apiYesFlag     bool
 )
 
 var apiCmd = &cobra.Command{
@@ -55,7 +55,7 @@ Examples:
 			return err
 		}
 
-		c, _, err := siteClient(cmd.Context(), apiSiteFlag)
+		c, _, err := profileClient(cmd.Context(), apiProfileFlag)
 		if err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ Examples:
 }
 
 func init() {
-	apiCmd.Flags().StringVar(&apiSiteFlag, "site", "", "site alias (defaults to the configured default site)")
+	apiCmd.Flags().StringVar(&apiProfileFlag, "profile", "", "profile alias (defaults to the active profile)")
 	apiCmd.Flags().StringVar(&apiDataFlag, "data", "", "request body: inline JSON, @file, or - for stdin")
 	apiCmd.Flags().StringArrayVar(&apiQueryFlags, "query", nil, "query parameter key=value (repeatable)")
 	apiCmd.Flags().StringVar(&apiFieldsFlag, "fields", "", "comma-separated dot-paths to keep in the output, e.g. issues.key,issues.fields.summary")

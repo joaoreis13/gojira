@@ -40,18 +40,25 @@ each time.
 
 ## Using gojira to talk to Jira
 
-1. Check state before doing anything: `gojira site list`,
-   `gojira auth status --site <alias>`.
-2. **Setting up a new site is not something you can do unattended.** It
+1. Check state before doing anything: `gojira profile list`,
+   `gojira auth status --profile <alias>`. Exactly one profile is active at
+   a time (marked in `profile list`); most commands default to it, and
+   switching (`gojira profile use <alias>`) is always a manual, explicit
+   step — never switch it on the user's behalf without asking.
+2. **Setting up a new profile is not something you can do unattended.** It
    needs a Client ID and Secret from an Atlassian OAuth 2.0 (3LO) app that
    only the user can create, at
    https://developer.atlassian.com/console/myapps/ (steps in README.md's
    "One-time setup" section). Once the user gives you those values:
    ```bash
-   gojira site add <alias> --base-url https://<team>.atlassian.net \
-     --client-id <id> --client-secret <secret> --default
-   gojira auth login --site <alias>   # opens a browser; the user completes this
+   gojira profile add <alias> --base-url https://<team>.atlassian.net \
+     --client-id <id> --client-secret <secret>
+   gojira profile use <alias>         # activates it, forcing a token refresh
+   gojira auth login --profile <alias>   # opens a browser; the user completes this
    ```
+   `profile add` never auto-activates, even for the very first profile —
+   activation is always its own explicit step (`--activate` on `add`, or a
+   separate `profile use`).
 3. Make calls with the generic passthrough, which reaches every Jira REST
    API v3 endpoint including admin/destructive ones:
    ```bash
@@ -87,7 +94,7 @@ Don't guess request/response field names. Look them up:
   listing its exact path, request/response schema, and required OAuth
   scope: https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/
 - JQL syntax and field names: https://support.atlassian.com/jira-software-cloud/docs/jql-fields/
-- OAuth scopes (for `gojira site add --scopes`):
+- OAuth scopes (for `gojira profile add --scopes`):
   https://developer.atlassian.com/cloud/jira/platform/scopes-for-oauth-2-3LO-and-forge-apps/
 
 ## Working on gojira's own source

@@ -78,14 +78,19 @@ you need your own. Full guide:
 ## Configure and log in
 
 ```bash
-gojira site add work \
+gojira profile add work \
   --base-url https://yourteam.atlassian.net \
   --client-id <your-client-id> \
-  --client-secret <your-client-secret> \
-  --default
+  --client-secret <your-client-secret>
 
-gojira auth login --site work   # opens your browser
+gojira profile use work         # activates it (and refreshes its token once authenticated)
+gojira auth login --profile work   # opens your browser
 ```
+
+A profile is a base URL + OAuth app + authenticated user. Exactly one
+profile is active at a time, and switching (`profile use`) is always a
+manual step — `profile add` never activates a profile on its own, even the
+first one you create (pass `--activate` to do both in one step).
 
 `auth login` runs the OAuth 2.0 (3LO) authorization-code flow (a local,
 short-lived HTTP listener on `--redirect-port` catches the callback),
@@ -111,9 +116,10 @@ gojira api DELETE /issue/PROJ-999 --yes   # destructive calls require --yes or a
 gojira whoami
 gojira search 'assignee = currentUser() AND status != Done' --output text
 
-# Multiple sites:
-gojira site add personal --base-url https://mysite.atlassian.net --client-id ... --client-secret ...
-gojira api GET /myself --site personal
+# Multiple profiles:
+gojira profile add personal --base-url https://mysite.atlassian.net --client-id ... --client-secret ...
+gojira api GET /myself --profile personal   # one-off against a non-active profile
+gojira profile use personal                 # or switch which profile is active
 
 # Token lifecycle:
 gojira auth status
@@ -142,15 +148,15 @@ Every command also documents itself via `--help`; this is the shape of it:
 
 | Command | Purpose |
 |---|---|
-| `gojira site add <alias> --base-url ... --client-id ... --client-secret ...` | Register a Jira site's OAuth app config. `--scopes`, `--redirect-port`, `--default` are optional. |
-| `gojira site list` / `site use <alias>` / `site remove <alias>` | List, switch default, or remove a configured site. |
-| `gojira auth login [--site] [--no-browser]` | Run the browser OAuth flow and store tokens. `--no-browser` prints the URL instead of auto-opening it. |
-| `gojira auth status [--site]` | Show token expiry and whether a refresh token is stored. |
-| `gojira auth refresh [--site]` | Force an immediate token refresh. |
-| `gojira auth logout [--site]` | Delete locally stored credentials (does not revoke the grant on Atlassian's side). |
-| `gojira api <METHOD> <path> [--data] [--query] [--fields] [--output] [--pretty] [--yes] [--site]` | Call any REST API v3 endpoint. `<path>` is relative to `/rest/api/3` (e.g. `/issue/PROJ-1`). |
-| `gojira whoami [--site]` | `GET /myself` — the authenticated user. |
-| `gojira search <JQL> [--max-results] [--page-token] [--jira-fields] [--fields] [--output] [--site]` | `POST /search/jql` — run a JQL query. |
+| `gojira profile add <alias> --base-url ... --client-id ... --client-secret ...` | Register a Jira profile's OAuth app config. `--scopes`, `--redirect-port`, `--activate` are optional; `--activate` also makes it the active profile. |
+| `gojira profile list` / `profile use [alias]` / `profile remove <alias>` | List, switch the active profile (prompts if no alias given), or remove a configured profile. `use` forces a token refresh for the profile it activates. |
+| `gojira auth login [--profile] [--no-browser]` | Run the browser OAuth flow and store tokens. `--no-browser` prints the URL instead of auto-opening it. |
+| `gojira auth status [--profile]` | Show token expiry and whether a refresh token is stored. |
+| `gojira auth refresh [--profile]` | Force an immediate token refresh. |
+| `gojira auth logout [--profile]` | Delete locally stored credentials (does not revoke the grant on Atlassian's side). |
+| `gojira api <METHOD> <path> [--data] [--query] [--fields] [--output] [--pretty] [--yes] [--profile]` | Call any REST API v3 endpoint. `<path>` is relative to `/rest/api/3` (e.g. `/issue/PROJ-1`). |
+| `gojira whoami [--profile]` | `GET /myself` — the authenticated user. |
+| `gojira search <JQL> [--max-results] [--page-token] [--jira-fields] [--fields] [--output] [--profile]` | `POST /search/jql` — run a JQL query. |
 | `gojira skill install [--project] [--dest <dir>]` | Install the bundled Agent Skill (see below). |
 
 ### `--data` (on `api`)
@@ -195,12 +201,15 @@ gate are for.
   app (Authorization page) is exactly `http://localhost:<redirect-port>/callback`.
 - **`listen on 127.0.0.1:<port> ...: address already in use`** — another
   process is using that port; pick a different `--redirect-port` on both
-  `site add` and the app's callback URL configuration, then re-run
+  `profile add` and the app's callback URL configuration, then re-run
   `auth login`.
 - **`invalid_grant` on refresh** — refresh tokens rotate and expire after 90
   days of inactivity (or if your Atlassian password changed); run
   `gojira auth login` again. Details in the
   [OAuth 2.0 (3LO) FAQ](https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/#how-do-i-get-a-new-access-token--if-my-access-token-expires-or-is-revoked-).
+  gojira only ever refreshes the *active* profile, and only when you switch
+  to it or use it — a profile you never switch back to can go 90 days idle
+  and hit exactly this; there's no background refresh across profiles.
 - **`no accessible site matches base_url ...`** — the authorizing Atlassian
   account doesn't have access to that site, or `--base-url` doesn't exactly
   match the site's URL (no trailing slash needed either way; matching is
@@ -215,7 +224,7 @@ gate are for.
 rm "$(go env GOPATH)/bin/gojira"   # or wherever `which gojira`/`where gojira` points
 ```
 
-Config and site data (OAuth app info, cached cloud ids, and the file-based
+Config and profile data (OAuth app info, cached cloud ids, and the file-based
 credential fallback if your OS keyring wasn't available) live under
 `os.UserConfigDir()`'s `gojira` subdirectory — remove it to reset
 everything:
@@ -227,7 +236,7 @@ everything:
 If you logged in and your OS keyring was available, also remove gojira's
 entries from it (e.g. Keychain Access on macOS, Credential Manager on
 Windows, Secret Service/`secret-tool` on Linux) — `gojira auth logout`
-before uninstalling does this for you per site.
+before uninstalling does this for you per profile.
 
 If you ran `gojira skill install`, also remove `~/.claude/skills/gojira`
 (or `./.claude/skills/gojira`, or your `--dest` path).
@@ -237,10 +246,10 @@ If you ran `gojira skill install`, also remove `~/.claude/skills/gojira`
 - Tokens live in your OS credential store by default, never on disk in
   plaintext unless no keyring is available on the machine (then a `0600`
   file is used, under the config directory above).
-- `gojira site add` only ever needs your own OAuth app's client id and
+- `gojira profile add` only ever needs your own OAuth app's client id and
   secret — no Jira account password or long-lived personal API token is
   ever entered into the tool.
-- Grant only the scopes you need; `gojira site add --scopes ...` overrides
+- Grant only the scopes you need; `gojira profile add --scopes ...` overrides
   the broad default set. See the
   [scopes reference](https://developer.atlassian.com/cloud/jira/platform/scopes-for-oauth-2-3LO-and-forge-apps/)
   for the full list and what each one unlocks.

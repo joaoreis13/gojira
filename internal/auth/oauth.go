@@ -29,27 +29,27 @@ const (
 	loginCallbackTimeout   = 3 * time.Minute
 )
 
-func redirectPort(site config.Site) int {
-	if site.RedirectPort != 0 {
-		return site.RedirectPort
+func redirectPort(profile config.Profile) int {
+	if profile.RedirectPort != 0 {
+		return profile.RedirectPort
 	}
 	return config.DefaultRedirectPort
 }
 
-func scopes(site config.Site) []string {
-	if len(site.Scopes) > 0 {
-		return site.Scopes
+func scopes(profile config.Profile) []string {
+	if len(profile.Scopes) > 0 {
+		return profile.Scopes
 	}
 	return config.DefaultScopes
 }
 
-func oauthConfig(site config.Site) *oauth2.Config {
+func oauthConfig(profile config.Profile) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     site.ClientID,
-		ClientSecret: site.ClientSecret,
+		ClientID:     profile.ClientID,
+		ClientSecret: profile.ClientSecret,
 		Endpoint:     oauth2.Endpoint{AuthURL: authorizeURL, TokenURL: tokenURL},
-		RedirectURL:  fmt.Sprintf("http://localhost:%d/callback", redirectPort(site)),
-		Scopes:       scopes(site),
+		RedirectURL:  fmt.Sprintf("http://localhost:%d/callback", redirectPort(profile)),
+		Scopes:       scopes(profile),
 	}
 }
 
@@ -63,21 +63,21 @@ type AccessibleResource struct {
 
 // Login runs the interactive browser + local-callback OAuth flow, exchanges
 // the resulting code for tokens, resolves the Jira Cloud id matching
-// site.BaseURL, and persists the token. It returns the resolved cloud id.
+// profile.BaseURL, and persists the token. It returns the resolved cloud id.
 //
 // This uses the plain authorization-code grant with a client secret, not
 // PKCE: as of this writing, Atlassian's OAuth 2.0 (3LO) apps don't support
 // PKCE for apps created in the developer console (confirmed by Atlassian
 // staff: https://community.developer.atlassian.com/t/oauth-2-0-with-proof-key-for-code-exchange-pkce/80173),
 // so a confidential client (client id + secret) is required.
-func Login(ctx context.Context, alias string, site config.Site, autoOpenBrowser bool) (cloudID string, err error) {
+func Login(ctx context.Context, alias string, profile config.Profile, autoOpenBrowser bool) (cloudID string, err error) {
 	state, err := randomString(24)
 	if err != nil {
 		return "", err
 	}
-	conf := oauthConfig(site)
+	conf := oauthConfig(profile)
 
-	code, err := runCallbackServer(ctx, redirectPort(site), state, conf, autoOpenBrowser)
+	code, err := runCallbackServer(ctx, redirectPort(profile), state, conf, autoOpenBrowser)
 	if err != nil {
 		return "", err
 	}
@@ -97,7 +97,7 @@ func Login(ctx context.Context, alias string, site config.Site, autoOpenBrowser 
 		return "", fmt.Errorf("save token: %w", err)
 	}
 
-	cloudID, err = ResolveCloudID(ctx, tok, site.BaseURL)
+	cloudID, err = ResolveCloudID(ctx, tok, profile.BaseURL)
 	if err != nil {
 		return "", fmt.Errorf("token saved, but resolving the Jira cloud id failed (it will be retried automatically on your next gojira command): %w", err)
 	}
@@ -263,12 +263,12 @@ func listAccessibleResources(ctx context.Context, tok *oauth2.Token) ([]byte, er
 
 // TokenSource returns an oauth2.TokenSource that transparently refreshes the
 // access token as needed and persists any refreshed token back to storage.
-func TokenSource(ctx context.Context, alias string, site config.Site) (oauth2.TokenSource, error) {
+func TokenSource(ctx context.Context, alias string, profile config.Profile) (oauth2.TokenSource, error) {
 	tok, err := LoadToken(alias)
 	if err != nil {
 		return nil, err
 	}
-	inner := oauthConfig(site).TokenSource(ctx, tok)
+	inner := oauthConfig(profile).TokenSource(ctx, tok)
 	return &persistingTokenSource{alias: alias, inner: inner, last: tok.AccessToken}, nil
 }
 
@@ -281,7 +281,7 @@ type persistingTokenSource struct {
 func (p *persistingTokenSource) Token() (*oauth2.Token, error) {
 	tok, err := p.inner.Token()
 	if err != nil {
-		return nil, fmt.Errorf("refresh access token for site %q (try `gojira auth login --site %s`): %w", p.alias, p.alias, err)
+		return nil, fmt.Errorf("refresh access token for profile %q (try `gojira auth login --profile %s`): %w", p.alias, p.alias, err)
 	}
 	if tok.AccessToken != p.last {
 		if _, err := SaveToken(p.alias, tok); err != nil {
@@ -292,25 +292,25 @@ func (p *persistingTokenSource) Token() (*oauth2.Token, error) {
 	return tok, nil
 }
 
-// EnsureCloudID resolves and returns site.CloudID, resolving it via the
+// EnsureCloudID resolves and returns profile.CloudID, resolving it via the
 // accessible-resources endpoint and reporting it as changed (so the caller
 // can persist config) when it wasn't already cached.
-func EnsureCloudID(ctx context.Context, ts oauth2.TokenSource, site config.Site) (cloudID string, changed bool, err error) {
-	if site.CloudID != "" {
-		return site.CloudID, false, nil
+func EnsureCloudID(ctx context.Context, ts oauth2.TokenSource, profile config.Profile) (cloudID string, changed bool, err error) {
+	if profile.CloudID != "" {
+		return profile.CloudID, false, nil
 	}
 	tok, err := ts.Token()
 	if err != nil {
 		return "", false, fmt.Errorf("get access token: %w", err)
 	}
-	cloudID, err = ResolveCloudID(ctx, tok, site.BaseURL)
+	cloudID, err = ResolveCloudID(ctx, tok, profile.BaseURL)
 	if err != nil {
 		return "", false, err
 	}
 	return cloudID, true, nil
 }
 
-// Status describes the current stored credential for a site without
+// Status describes the current stored credential for a profile without
 // exposing the token values themselves.
 type Status struct {
 	LoggedIn   bool
@@ -330,7 +330,7 @@ func GetStatus(alias string) (Status, error) {
 	}, nil
 }
 
-// Logout deletes locally stored credentials for a site. It does not revoke
+// Logout deletes locally stored credentials for a profile. It does not revoke
 // the grant on Atlassian's side; that must be done from
 // https://id.atlassian.com/manage-profile/apps.
 func Logout(alias string) error {

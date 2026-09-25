@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	searchSiteFlag      string
+	searchProfileFlag   string
 	searchMaxResults    int
 	searchPageToken     string
 	searchFieldsAPIFlag string
@@ -55,7 +55,7 @@ https://support.atlassian.com/jira-software-cloud/docs/what-is-advanced-searchin
 			return err
 		}
 
-		c, alias, err := siteClient(cmd.Context(), searchSiteFlag)
+		c, alias, err := profileClient(cmd.Context(), searchProfileFlag)
 		if err != nil {
 			return err
 		}
@@ -64,14 +64,14 @@ https://support.atlassian.com/jira-software-cloud/docs/what-is-advanced-searchin
 			return err
 		}
 		if resp.StatusCode >= 400 {
-			return fmt.Errorf("POST /search/jql -> HTTP %d on site %q: %s", resp.StatusCode, alias, string(resp.Body))
+			return fmt.Errorf("POST /search/jql -> HTTP %d on profile %q: %s", resp.StatusCode, alias, string(resp.Body))
 		}
 		return renderResponse(os.Stdout, resp.Body, searchFieldsFlag, searchOutputFlag, false)
 	},
 }
 
 func init() {
-	searchCmd.Flags().StringVar(&searchSiteFlag, "site", "", "site alias (defaults to the configured default site)")
+	searchCmd.Flags().StringVar(&searchProfileFlag, "profile", "", "profile alias (defaults to the active profile)")
 	searchCmd.Flags().IntVar(&searchMaxResults, "max-results", 50, "maximum number of issues to return in this page")
 	searchCmd.Flags().StringVar(&searchPageToken, "page-token", "", "nextPageToken from a previous response, to fetch the following page")
 	searchCmd.Flags().StringVar(&searchFieldsAPIFlag, "jira-fields", "", "comma-separated Jira issue fields to request from the API, e.g. summary,status,assignee")

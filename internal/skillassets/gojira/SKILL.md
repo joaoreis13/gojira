@@ -13,20 +13,29 @@ https://github.com/joaoreis13/gojira
 
 ```
 command -v gojira || echo "not installed"
-gojira site list
-gojira auth status --site <alias>
+gojira profile list
+gojira auth status --profile <alias>
 ```
+
+A profile is a base URL + OAuth app + authenticated user. Exactly one is
+active at a time (`gojira profile list` marks it); switching is always a
+manual, explicit step (`gojira profile use <alias>`) — never do it on the
+user's behalf without asking, and gojira itself never does it automatically.
+Most commands default to the active profile; pass `--profile <alias>` only
+for a genuine one-off against a different profile.
 
 - **Not installed** — `go install github.com/joaoreis13/gojira/cmd/gojira@latest`
   (requires Go). If Go isn't available, tell the user; don't install a Go
   toolchain or download a release binary without asking first.
-- **No site configured, or `site list` doesn't show the one you need** —
+- **No profile configured, or `profile list` doesn't show the one you need** —
   this requires the user's own Atlassian OAuth app (Client ID + Secret from
   https://developer.atlassian.com/console/myapps/). You cannot create this
   for them. Point them at the repo README's "One-time setup" section, then
-  run `gojira site add <alias> --base-url <url> --client-id <id> --client-secret <secret>`
-  once they give you the values.
-- **Not logged in / token status unclear** — `gojira auth login --site <alias>`.
+  run `gojira profile add <alias> --base-url <url> --client-id <id> --client-secret <secret>`
+  once they give you the values. This never activates it — the user still
+  needs to run `gojira profile use <alias>` (or you pass `--activate`) once
+  it's authorized.
+- **Not logged in / token status unclear** — `gojira auth login --profile <alias>`.
   This opens a browser for the user to approve; it's an interactive step —
   tell the user to complete it, don't try to script around it.
 
@@ -81,7 +90,7 @@ in `references/commands.md` next to this file.
   request/response fields, and required scopes:
   https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/
 - JQL syntax/fields: https://support.atlassian.com/jira-software-cloud/docs/jql-fields/
-- OAuth scopes reference (for `gojira site add --scopes`):
+- OAuth scopes reference (for `gojira profile add --scopes`):
   https://developer.atlassian.com/cloud/jira/platform/scopes-for-oauth-2-3LO-and-forge-apps/
 
 ## Guardrails
@@ -94,3 +103,7 @@ in `references/commands.md` next to this file.
 - Treat `DELETE`, bulk operations, and admin/configuration-changing calls
   (permission schemes, webhooks, workflows, project settings) as
   destructive: confirm with the user before passing `--yes`.
+- Never run `gojira profile use` to switch the active profile without the
+  user asking for it — it's a deliberately manual, explicit action, and
+  silently switching could point a later command at the wrong Jira
+  instance.

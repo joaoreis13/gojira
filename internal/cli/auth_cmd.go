@@ -12,16 +12,16 @@ import (
 
 var authCmd = &cobra.Command{
 	Use:   "auth",
-	Short: "Log in, check status, refresh, or log out of a Jira site",
+	Short: "Log in, check status, refresh, or log out of a Jira profile",
 }
 
-var authSiteFlag string
+var authProfileFlag string
 var authNoBrowserFlag bool
 
 var authLoginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Authorize gojira for a site via your browser (OAuth 2.0 3LO, authorization code)",
-	Long: `Authorize gojira for a site via your browser.
+	Short: "Authorize gojira for a profile via your browser (OAuth 2.0 3LO, authorization code)",
+	Long: `Authorize gojira for a profile via your browser.
 
 By default this tries to open the authorization URL in your OS's default
 browser. Pass --no-browser to skip that and just print the URL instead,
@@ -33,16 +33,16 @@ Atlassian account, or you run multiple browser profiles).`,
 		if err != nil {
 			return err
 		}
-		alias, site, err := cfg.Resolve(authSiteFlag)
+		alias, profile, err := cfg.Resolve(authProfileFlag)
 		if err != nil {
 			return err
 		}
-		cloudID, err := auth.Login(cmd.Context(), alias, site, !authNoBrowserFlag)
+		cloudID, err := auth.Login(cmd.Context(), alias, profile, !authNoBrowserFlag)
 		if err != nil {
 			return err
 		}
-		site.CloudID = cloudID
-		cfg.Sites[alias] = site
+		profile.CloudID = cloudID
+		cfg.Profiles[alias] = profile
 		if err := config.Save(cfg); err != nil {
 			return err
 		}
@@ -53,13 +53,13 @@ Atlassian account, or you run multiple browser profiles).`,
 
 var authStatusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Show token status for a site",
+	Short: "Show token status for a profile",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
 		if err != nil {
 			return err
 		}
-		alias, _, err := cfg.Resolve(authSiteFlag)
+		alias, _, err := cfg.Resolve(authProfileFlag)
 		if err != nil {
 			return err
 		}
@@ -71,7 +71,7 @@ var authStatusCmd = &cobra.Command{
 		if time.Now().After(st.ExpiresAt) {
 			state = "expired (will auto-refresh on next use)"
 		}
-		fmt.Printf("site: %s\naccess token: %s\nexpires: %s\nrefresh token present: %v\n",
+		fmt.Printf("profile: %s\naccess token: %s\nexpires: %s\nrefresh token present: %v\n",
 			alias, state, st.ExpiresAt.Format(time.RFC3339), st.HasRefresh)
 		return nil
 	},
@@ -79,21 +79,17 @@ var authStatusCmd = &cobra.Command{
 
 var authRefreshCmd = &cobra.Command{
 	Use:   "refresh",
-	Short: "Force a token refresh for a site",
+	Short: "Force a token refresh for a profile",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
 		if err != nil {
 			return err
 		}
-		alias, site, err := cfg.Resolve(authSiteFlag)
+		alias, profile, err := cfg.Resolve(authProfileFlag)
 		if err != nil {
 			return err
 		}
-		ts, err := auth.TokenSource(cmd.Context(), alias, site)
-		if err != nil {
-			return err
-		}
-		tok, err := ts.Token()
+		tok, err := refreshToken(cmd.Context(), alias, profile)
 		if err != nil {
 			return err
 		}
@@ -104,14 +100,14 @@ var authRefreshCmd = &cobra.Command{
 
 var authLogoutCmd = &cobra.Command{
 	Use:   "logout",
-	Short: "Delete stored credentials for a site",
+	Short: "Delete stored credentials for a profile",
 	Long:  "Deletes locally stored credentials. It does not revoke the grant on Atlassian's side — do that at https://id.atlassian.com/manage-profile/apps if needed.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
 		if err != nil {
 			return err
 		}
-		alias, _, err := cfg.Resolve(authSiteFlag)
+		alias, _, err := cfg.Resolve(authProfileFlag)
 		if err != nil {
 			return err
 		}
@@ -125,7 +121,7 @@ var authLogoutCmd = &cobra.Command{
 
 func init() {
 	for _, c := range []*cobra.Command{authLoginCmd, authStatusCmd, authRefreshCmd, authLogoutCmd} {
-		c.Flags().StringVar(&authSiteFlag, "site", "", "site alias (defaults to the configured default site)")
+		c.Flags().StringVar(&authProfileFlag, "profile", "", "profile alias (defaults to the active profile)")
 	}
 	authLoginCmd.Flags().BoolVar(&authNoBrowserFlag, "no-browser", false, "print the authorization URL instead of opening it automatically")
 	authCmd.AddCommand(authLoginCmd, authStatusCmd, authRefreshCmd, authLogoutCmd)
