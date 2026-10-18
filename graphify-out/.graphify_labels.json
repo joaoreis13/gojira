@@ -1,0 +1,12 @@
+{
+  "1": "oauth.go",
+  "2": "profile_cmd.go",
+  "3": "format.go",
+  "4": "gojira",
+  "5": "testing.T",
+  "6": "checklist_cmd.go",
+  "7": "checklist_cmd_test.go",
+  "8": "checklist.go",
+  "9": "gojira — Jira Cloud CLI for agents",
+  "10": "github.com/joaoreis13/gojira"
+}

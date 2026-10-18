@@ -243,6 +243,12 @@ gate are for.
   default; `--project` installs to `./.claude/skills/gojira` instead, and
   `--dest <dir>` targets any other location. Source:
   [`internal/skillassets/gojira/`](internal/skillassets/gojira/).
+- **[graphify-out/](graphify-out/)** — the code knowledge graph, committed on
+  purpose as architecture documentation: `GRAPH_REPORT.md` (summary, god
+  nodes, communities, import cycles), `graph.json` (full node/edge graph for
+  `graphify query|path|explain`), `graph.html` (interactive browser view) and
+  `manifest.json`. Rebuild after code changes with `graphify update .`
+  (AST-only, no API cost); the AST cache and dated snapshots stay untracked.
 
 ## Troubleshooting
 

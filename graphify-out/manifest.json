@@ -1,0 +1,206 @@
+{
+  "cmd/gojira/main.go": {
+    "mtime": 1789738101.5344865,
+    "seen": 1792363380.00655,
+    "ast_hash": "80374c340088c9297e1c919e073e7769",
+    "semantic_hash": ""
+  },
+  "go.mod": {
+    "mtime": 1789737797.0885296,
+    "seen": 1792363380.0065532,
+    "ast_hash": "c723125b705e06f5207b9bfc108bea60",
+    "semantic_hash": ""
+  },
+  "internal/auth/oauth.go": {
+    "mtime": 1790361969.705179,
+    "seen": 1792363380.0065548,
+    "ast_hash": "a26a937c44ae797a944a41d4dcb7ce25",
+    "semantic_hash": ""
+  },
+  "internal/auth/store.go": {
+    "mtime": 1790361952.212133,
+    "seen": 1792363380.0065558,
+    "ast_hash": "785238f068bd72c512f9496a3931f79b",
+    "semantic_hash": ""
+  },
+  "internal/cli/api_cmd.go": {
+    "mtime": 1790361928.1918857,
+    "seen": 1792363380.006557,
+    "ast_hash": "e7cf67f6ce99f04bfd2fdce4030b13fd",
+    "semantic_hash": ""
+  },
+  "internal/cli/auth_cmd.go": {
+    "mtime": 1790361905.2103827,
+    "seen": 1792363380.006558,
+    "ast_hash": "1ec3c19462181d0a289542ab2db92172",
+    "semantic_hash": ""
+  },
+  "internal/cli/context.go": {
+    "mtime": 1790361864.732316,
+    "seen": 1792363380.006559,
+    "ast_hash": "2dbf3eccc5f4e0d909c85778aef074aa",
+    "semantic_hash": ""
+  },
+  "internal/cli/context_test.go": {
+    "mtime": 1790362051.5497859,
+    "seen": 1792363380.006559,
+    "ast_hash": "a59027dd4a7737a8614e42160a3c119f",
+    "semantic_hash": ""
+  },
+  "internal/cli/profile_cmd.go": {
+    "mtime": 1790362442.2605116,
+    "seen": 1792363380.00656,
+    "ast_hash": "6906c464d64130b4f65b015d111b46c3",
+    "semantic_hash": ""
+  },
+  "internal/cli/profile_cmd_test.go": {
+    "mtime": 1790362447.3001082,
+    "seen": 1792363380.006561,
+    "ast_hash": "c791a457e1488d84d46e5fe997321bda",
+    "semantic_hash": ""
+  },
+  "internal/cli/response.go": {
+    "mtime": 1790089456.0317383,
+    "seen": 1792363380.006561,
+    "ast_hash": "a0a6489b2a6c11e8726a278133d92956",
+    "semantic_hash": ""
+  },
+  "internal/cli/response_test.go": {
+    "mtime": 1790089464.8016267,
+    "seen": 1792363380.006562,
+    "ast_hash": "f9993cd390edf992c972b6f6994066ee",
+    "semantic_hash": ""
+  },
+  "internal/cli/root.go": {
+    "mtime": 1792365040.129429,
+    "seen": 1792366249.802193,
+    "ast_hash": "1ba4e4a080a712dcbefa2446a409e766",
+    "semantic_hash": ""
+  },
+  "internal/cli/search_cmd.go": {
+    "mtime": 1790361961.0656796,
+    "seen": 1792363380.0065632,
+    "ast_hash": "1cf77fdb438aedd2d3882e541037d64b",
+    "semantic_hash": ""
+  },
+  "internal/cli/skill_cmd.go": {
+    "mtime": 1790045233.385829,
+    "seen": 1792363380.0065641,
+    "ast_hash": "ecc452ae008225a38cd10ff96e6752cd",
+    "semantic_hash": ""
+  },
+  "internal/cli/skill_cmd_test.go": {
+    "mtime": 1790045352.8311796,
+    "seen": 1792363380.006565,
+    "ast_hash": "c6047548ea8478d403c8c01fe451ccf3",
+    "semantic_hash": ""
+  },
+  "internal/cli/whoami_cmd.go": {
+    "mtime": 1790361963.126444,
+    "seen": 1792363380.006565,
+    "ast_hash": "c4c595d62ac813013f68885eff39269c",
+    "semantic_hash": ""
+  },
+  "internal/client/client.go": {
+    "mtime": 1789737945.1899574,
+    "seen": 1792363380.0065658,
+    "ast_hash": "3f652aaeb21889f152a233df5987a00c",
+    "semantic_hash": ""
+  },
+  "internal/config/config.go": {
+    "mtime": 1790361804.8959157,
+    "seen": 1792363380.006567,
+    "ast_hash": "47876730b15b24c48da0ab5386dd03d3",
+    "semantic_hash": ""
+  },
+  "internal/config/config_test.go": {
+    "mtime": 1790361815.0167072,
+    "seen": 1792363380.006567,
+    "ast_hash": "af3d543397466e221cf25e601031bee8",
+    "semantic_hash": ""
+  },
+  "internal/output/format.go": {
+    "mtime": 1789737982.0120566,
+    "seen": 1792363380.006568,
+    "ast_hash": "b9c4cad358281de1914ea99b4330e15a",
+    "semantic_hash": ""
+  },
+  "internal/output/format_test.go": {
+    "mtime": 1789738134.983448,
+    "seen": 1792363380.006569,
+    "ast_hash": "4b75f7bd4ad44dbd3969312140e1da2c",
+    "semantic_hash": ""
+  },
+  "internal/skillassets/embed.go": {
+    "mtime": 1790045211.731491,
+    "seen": 1792363380.00657,
+    "ast_hash": "5b7daa08f58853f026024bb2c55b046e",
+    "semantic_hash": ""
+  },
+  ".github/workflows/ci.yml": {
+    "mtime": 1789738221.7741833,
+    "seen": 1792363380.00657,
+    "ast_hash": "84cb91df1d9892a43822377b817609f9",
+    "semantic_hash": ""
+  },
+  ".github/workflows/release.yml": {
+    "mtime": 1789738229.3134258,
+    "seen": 1792363380.006571,
+    "ast_hash": "f2803bd8dad9135e2c2dc782c44e560f",
+    "semantic_hash": ""
+  },
+  ".goreleaser.yaml": {
+    "mtime": 1789738225.8968134,
+    "seen": 1792363380.006572,
+    "ast_hash": "7af613c9e35285f9d05f9feaf1aa5789",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1792365040.1270995,
+    "seen": 1792366249.802204,
+    "ast_hash": "1694cb71b7629cea6bff33a0904c062f",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1792365040.127383,
+    "seen": 1792366249.8022048,
+    "ast_hash": "97c0d15a4c54897bcc7a856a7caac63e",
+    "semantic_hash": ""
+  },
+  "internal/skillassets/gojira/SKILL.md": {
+    "mtime": 1792365040.1302252,
+    "seen": 1792366249.802206,
+    "ast_hash": "3e49ff1fa058411bcd78aa09ff2dad8d",
+    "semantic_hash": ""
+  },
+  "internal/skillassets/gojira/references/commands.md": {
+    "mtime": 1792365040.1305737,
+    "seen": 1792366249.802206,
+    "ast_hash": "e3f448bb2cba221cc7d48f4624525f1d",
+    "semantic_hash": ""
+  },
+  "internal/checklist/checklist.go": {
+    "mtime": 1792365040.1277697,
+    "seen": 1792366249.802183,
+    "ast_hash": "1fc26f13b81d6aa7e33b60aaf6faf757",
+    "semantic_hash": ""
+  },
+  "internal/checklist/checklist_test.go": {
+    "mtime": 1792365040.1280155,
+    "seen": 1792366249.8021839,
+    "ast_hash": "7ee47d4699171e0e63b9cce98e50539d",
+    "semantic_hash": ""
+  },
+  "internal/cli/checklist_cmd.go": {
+    "mtime": 1792365040.1283383,
+    "seen": 1792366249.802187,
+    "ast_hash": "0209de6c7134939ad5b6381dd161c739",
+    "semantic_hash": ""
+  },
+  "internal/cli/checklist_cmd_test.go": {
+    "mtime": 1792365040.1287448,
+    "seen": 1792366249.802188,
+    "ast_hash": "e9dc1942852775a6aeba94ac265902f5",
+    "semantic_hash": ""
+  }
+}

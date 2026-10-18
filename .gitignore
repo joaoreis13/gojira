@@ -3,3 +3,15 @@
 *.test
 *.out
 .DS_Store
+
+# graphify knowledge graph: committed on purpose as application documentation
+# and AI context (architecture map, community report, interactive graph).
+# Un-ignore it here because a global core.excludesFile may ignore it
+# everywhere else. Build caches and dated rebuild snapshots stay local.
+!graphify-out/
+!graphify-out/**
+graphify-out/cache/
+graphify-out/.graphify_root
+graphify-out/*/.graphify_labels.json
+graphify-out/*/.graphify_labels.json.sig
+graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
