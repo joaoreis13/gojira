@@ -69,3 +69,40 @@ profile is active at a time; switching is always a manual, explicit step
   --fields`).
 - `--output json|text` — default `text`.
 - `--profile <alias>`.
+
+## checklist (Smart Checklist items)
+
+`gojira checklist <subcommand> [flags]` — reads and writes the Railsware
+Smart Checklist "Checklists" custom field. Item lines are markdown with a
+status marker: `- ` todo, `+ ` done, `x ` skipped, `~ ` in progress.
+
+- `gojira checklist get <issue> [--field <id>] [--output json|text] [--profile]`
+  — `GET /issue/{key}?fields=<Checklists field>`; prints numbered items,
+  sections and `done/total`. `--output json` emits
+  `{issue, field:{id,name}, items:[{number,status,text,section}], done, total}`.
+- `gojira checklist fields [--output json|text] [--profile]` — `GET /field`,
+  listing every checklist custom field; the read/write one is marked.
+- `gojira checklist set <issue> [--file <path>|--data '<markdown>'|--data -]
+  [--field] [--dry-run] [--notify] [--profile]` — `PUT /issue/{key}` with the
+  whole checklist. Content with no item lines is rejected.
+- `gojira checklist add <issue> <text>... [--status <status>] [--field]
+  [--dry-run] [--notify] [--profile]` — append an item (default `todo`).
+- `gojira checklist check|uncheck|skip|start <issue> <item> [--field]
+  [--dry-run] [--notify] [--profile]` — set done / todo / skipped /
+  in-progress for one item.
+- `gojira checklist remove <issue> <item> [--field] [--dry-run] [--notify]
+  [--profile]` — delete one item (and its `>` detail lines).
+- `gojira checklist raw <issue> [--profile]` — the raw
+  `com.railsware.SmartChecklist.checklist` issue property, read-only.
+
+`<item>` is a 1-based item number or matching item text (case-insensitive;
+exact match wins over substring). Ambiguous or missing selectors are errors,
+and no write happens. `remove` is stricter: number or exact text only.
+
+Writes auto-target only a field named exactly "Checklists" (no fuzzy match)
+and reject a `--field` that is not a `customfield_*` id unless
+`--allow-any-field` is passed. Text output escapes control characters from
+Jira data before printing. Mutations are read-modify-write:
+they read the field, apply one change, and PUT the whole checklist back, so
+it is worth a re-read (`checklist get`) before mutating a checklist someone
+else may have just edited.

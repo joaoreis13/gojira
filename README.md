@@ -116,6 +116,12 @@ gojira api DELETE /issue/PROJ-999 --yes   # destructive calls require --yes or a
 gojira whoami
 gojira search 'assignee = currentUser() AND status != Done' --output text
 
+# Smart Checklist items (Railsware app) — read, edit, and inspect:
+gojira checklist get PROJ-123
+gojira checklist check PROJ-123 "deploy master"
+gojira checklist add PROJ-123 "write release notes" --status in-progress
+gojira checklist set PROJ-123 --file checklist.md
+
 # Multiple profiles:
 gojira profile add personal --base-url https://mysite.atlassian.net --client-id ... --client-secret ...
 gojira api GET /myself --profile personal   # one-off against a non-active profile
@@ -157,6 +163,12 @@ Every command also documents itself via `--help`; this is the shape of it:
 | `gojira api <METHOD> <path> [--data] [--query] [--fields] [--output] [--pretty] [--yes] [--profile]` | Call any REST API v3 endpoint. `<path>` is relative to `/rest/api/3` (e.g. `/issue/PROJ-1`). |
 | `gojira whoami [--profile]` | `GET /myself` — the authenticated user. |
 | `gojira search <JQL> [--max-results] [--page-token] [--jira-fields] [--fields] [--output] [--profile]` | `POST /search/jql` — run a JQL query. |
+| `gojira checklist get <issue> [--field] [--output] [--profile]` | Read the issue's Smart Checklist items (`GET /issue/{key}?fields=<Checklists field>`), numbered, with progress. |
+| `gojira checklist set <issue> --file <path> \| --data '<markdown>' \| --data -` | Replace the checklist from markdown (one item per line). |
+| `gojira checklist add <issue> <text>... [--status todo\|done\|skipped\|in-progress]` | Append an item (default `todo`). |
+| `gojira checklist check\|uncheck\|skip\|start\|remove <issue> <item>` | Change one item's state or delete it. `<item>` is an item number or uniquely matching text. |
+| `gojira checklist fields [--output]` | List checklist custom fields on the site and which one gojira writes. |
+| `gojira checklist raw <issue>` | Print the raw `com.railsware.SmartChecklist.checklist` issue property. |
 | `gojira skill install [--project] [--dest <dir>]` | Install the bundled Agent Skill (see below). |
 
 ### `--data` (on `api`)
@@ -174,6 +186,45 @@ Every command also documents itself via `--help`; this is the shape of it:
   shapes (issue search results, a single issue, `values`-paginated admin
   lists); anything else falls back to compact JSON either way.
 - `--pretty` — indent JSON output (only relevant with `--output json`).
+
+## Smart Checklist items
+
+[Smart Checklist for Jira](https://railsware.atlassian.net/wiki/spaces/CHK/pages/92176610)
+(Railsware) stores each issue's checklist in its `Checklists` custom field as
+markdown, one item per line, with a status marker as the first character:
+
+| Marker | Status |
+|---|---|
+| `- ` | todo |
+| `+ ` | done |
+| `x ` | skipped |
+| `~ ` | in progress |
+
+`gojira checklist` reads and writes that field (the app's documented read
+**and** write path — updating the issue property is no longer supported).
+Headings (`#`, `##`), item details (`> ...`) and blank lines are preserved
+verbatim, so changing one item never reformats the rest. Item selectors are
+either a 1-based number or (a uniquely matching piece of) item text; an
+ambiguous selector is an error listing the candidates, not a guess.
+
+The field id is auto-detected from `GET /field`; on a site with more than one
+candidate field, or a renamed field, pass `--field customfield_XXXXX`
+(`gojira checklist fields` lists them). Writes refuse a fuzzy match and
+require `--field` to be a real `customfield_*` id (override with
+`--allow-any-field`), so a typo can't overwrite a system field like
+`summary`. `remove` additionally requires an item number or the item's exact
+text — a substring alone won't delete anything.
+
+Writes ask Jira not to notify watchers (`?notifyUsers=false`, best effort:
+Jira may ignore it for users without the permission); `--notify` opts back
+in. Every mutating command supports `--dry-run`, which prints the resulting
+checklist instead of writing it. Text output escapes control characters
+coming from Jira, so a checklist item can't emit ANSI sequences into your
+terminal.
+
+`gojira checklist raw <issue>` reads the app's internal
+`com.railsware.SmartChecklist.checklist` issue property — useful for
+troubleshooting, but read-only here.
 
 ## For AI agents
 
