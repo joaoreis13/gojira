@@ -79,6 +79,31 @@ gojira api <METHOD> <path> [--data '<json>' | --data @file | --data -] \
   project key, custom field value, etc.) happens to be a JQL reserved word
   (`IN`, `AND`, `OR`, `EMPTY`, ...), Jira rejects it with "Expecting either
   a value, list or function but got '<WORD>'" — quote it: `project = "IN"`.
+- `gojira checklist <subcommand>` — Smart Checklist (Railsware) items:
+  - `checklist get <issue> [--output json|text]` — numbered items + progress.
+    Reads the "Checklists" custom field. Field id is auto-detected; pass
+    `--field customfield_XXXXX` when the site has several checklist fields
+    (`checklist fields` lists them).
+  - `checklist set <issue> --file <path> | --data '<markdown>' | --data -` —
+    replace the whole checklist (one item per line).
+  - `checklist add <issue> <text>... [--status todo|done|skipped|in-progress]`
+    — append an item.
+  - `checklist check|uncheck|skip|start|remove <issue> <item>` — change one
+    item's state or delete it. `<item>` is a 1-based number or uniquely
+    matching text; an ambiguous selector errors with the candidate list.
+  - `checklist raw <issue>` — the raw
+    `com.railsware.SmartChecklist.checklist` issue property (read-only).
+  - All mutating subcommands accept `--dry-run` (prints the result, writes
+    nothing) and ask Jira not to notify watchers (`notifyUsers=false`, best
+    effort); `--notify` opts back in.
+  - Writes refuse a fuzzy field match and require `--field` to be a
+    `customfield_*` id (`--allow-any-field` overrides), and `remove` needs an
+    item number or the item's exact text — a bare substring never mutates.
+  - Item syntax is markdown, one item per line: `- ` todo, `+ ` done,
+    `x ` skipped, `~ ` in progress. Headings (`#`/`##`) and detail lines
+    (`> ...`) are preserved verbatim on edits. Writing through the custom
+    field is the app's documented write path — the issue property is not
+    writable through gojira.
 
 Full flags for every command: `gojira <command> --help`, or the static copy
 in `references/commands.md` next to this file.
